@@ -76,8 +76,6 @@ class CameraCalibration:
             self.gray_images.append(gray)
             print('Grid found: {}/{}'.format(len(self.grid_images),self.n_frames))
             self.time_since_last_frame = 0
-            #cv2.imshow('Corners', grid_img)
-            #cv2.waitKey(1)
         self.end_frame_time = time()
         
     def get_calibration_parameters(self):
