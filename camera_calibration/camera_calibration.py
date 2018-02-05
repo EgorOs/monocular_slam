@@ -32,8 +32,6 @@ class CameraCalibration:
     
     def on_image_get(self, data):
         self.camera_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        #cv2.imshow('Camera img', self.camera_img)
-        #cv2.waitKey(1)
 
         #  Calibration tutorials:
         #  https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
