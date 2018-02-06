@@ -21,15 +21,16 @@ class CameraCalibration:
         self.time_since_last_frame = 0
         self.end_frame_time = 0
         #  Time interval allows to reposition chess grid between frames
-        self.time_interval = 2
+        self.time_interval = 1.5
         self.calibration_complete = False
+        self.initial_time = time()
     
     def start_countdown(self,t):
         print(t)
         for i in range(t)[::-1]:
             sleep(1)
             print(i)
-    
+
     def on_image_get(self, data):
         self.camera_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
 
@@ -59,10 +60,10 @@ class CameraCalibration:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         #  Looking for chessboard corners
         ret, corners = cv2.findChessboardCorners(gray, (self.grid_h,self.grid_w),None)
-        
+
         #  If corners are found append image data to the list
         self.time_since_last_frame += time()-self.end_frame_time
-        if (ret == True) and (self.time_since_last_frame>self.time_interval):
+        if (ret == True):
             self.objpoints.append(objp)
 
             corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
@@ -70,13 +71,23 @@ class CameraCalibration:
             
             #  Draw and display the corners
             grid_img = cv2.drawChessboardCorners(img, (self.grid_h,self.grid_w), corners2,ret)
-            self.grid_images.append(grid_img)
-            self.gray_images.append(gray)
-            print('Grid found: {}/{}'.format(len(self.grid_images),self.n_frames))
-            self.time_since_last_frame = 0
+            cv2.imshow('Camera image', grid_img)
+            cv2.waitKey(1)
+            if self.time_interval < self.time_since_last_frame:
+                self.grid_images.append(grid_img)
+                self.gray_images.append(gray)
+                print('Grid found: {}/{}'.format(len(self.grid_images),self.n_frames))
+                self.time_since_last_frame = 0
+        else:
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(gray,'WASTED',(220,300), font, 2,(2,20,20),4,cv2.LINE_AA)
+            cv2.imshow('Camera image', gray)
+            cv2.waitKey(1)
+
         self.end_frame_time = time()
         
     def get_calibration_parameters(self):
+        cv2.destroyAllWindows()
         for gray in self.gray_images:
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objpoints,self.imgpoints, gray.shape[::-1],None,None)
         h,  w = self.gray_images[0].shape[:2]
@@ -85,9 +96,11 @@ class CameraCalibration:
         f.write(str(newcameramtx))
         f.close()
         self.calibration_complete = True
-        for gray in self.gray_images:
-            dst = cv2.undistort(gray, mtx, dist, None, newcameramtx)
-            cv2.imwrite('c{}.png'.format(time()),dst)
+        dst = cv2.undistort(self.gray_images[0], mtx, dist, None, newcameramtx)
+        cv2.imwrite('undistort/dst.png', dst)
+        x,y,w,h = roi
+        dst = dst[y:y+h, x:x+w]
+        cv2.imwrite('undistort/roi.png', dst)
         return (mtx, dist, None, newcameramtx)
 
 
