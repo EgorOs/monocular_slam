@@ -6,6 +6,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from time import sleep
 from time import time
+import sys
 
 class CameraCalibration:
     """Documentation string"""
@@ -43,7 +44,7 @@ class CameraCalibration:
         elif self.calibration_complete == False:
             params = self.get_calibration_parameters()
         else:
-            pass
+            sys.exit()
 
     def find_corners(self, img):
         #  Termination criteria
@@ -92,7 +93,7 @@ class CameraCalibration:
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objpoints,self.imgpoints, gray.shape[::-1],None,None)
         h,  w = self.gray_images[0].shape[:2]
         newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
-        f = open('par{}.txt'.format(time()), 'w')
+        f = open('camera_matirx.txt', 'w')
         f.write(str(newcameramtx))
         f.close()
         self.calibration_complete = True
