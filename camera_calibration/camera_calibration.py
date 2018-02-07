@@ -43,7 +43,7 @@ class CameraCalibration:
         elif self.calibration_complete == False:
             params = self.get_calibration_parameters()
         else:
-            sys.exit()
+            rospy.signal_shutdown('Calibration is finished.')
 
     def find_corners(self, img):
         #  Termination criteria
@@ -100,13 +100,15 @@ class CameraCalibration:
         cv2.imwrite('undistort/dst.png', dst)
         x,y,w,h = roi
         dst = dst[y:y+h, x:x+w]
+        if any(dst.shape)==0:
+            print('Unable to save image, because region of interest has width==0 or height==0')
         cv2.imwrite('undistort/roi.png', dst)
         return (mtx, dist, None, newcameramtx)
 
 def main():
     calibration = CameraCalibration()
     calibration.start_countdown(3)
-    rospy.init_node("Camera_calibration", anonymous = True)
+    rospy.init_node("Camera_calibration", anonymous = True, disable_signals = True)
     try:
         rospy.spin()
     except Exception as e:
