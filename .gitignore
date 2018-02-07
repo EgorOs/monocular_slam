@@ -3,3 +3,4 @@ samples
 __pycache__
 *.txt
 .idea
+static_kp.py

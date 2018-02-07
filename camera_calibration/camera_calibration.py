@@ -4,8 +4,7 @@ import numpy as np
 import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-from time import sleep
-from time import time
+from time import sleep,time
 import sys
 
 class CameraCalibration:
@@ -103,7 +102,6 @@ class CameraCalibration:
         dst = dst[y:y+h, x:x+w]
         cv2.imwrite('undistort/roi.png', dst)
         return (mtx, dist, None, newcameramtx)
-
 
 def main():
     calibration = CameraCalibration()
