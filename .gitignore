@@ -1,6 +1,10 @@
 *.png
+!a1.png
+!a2.png
 samples
 __pycache__
 *.txt
 .idea
-static_kp.py
+kp_matcher.py
+*jpg
+*.pyc
