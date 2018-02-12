@@ -38,10 +38,16 @@ def match_features(kp1, des1, kp2, des2, cam, min_match_count=10):
         print("Not enough matches are found - {}/{}".format(len(good),min_match_count))
         return None
 
-def estimate_pose(src_pts, dst_pts):
+def undistort_frame(frame, cam):
+    frame = cv2.undistort(frame, cam.K, cam.dist, None, cam.new_K)
+    x,y,w,h = 20,25,590,310
+    frame = frame[y:y+h, x:x+w]
+    return frame
+
+def estimate_pose(src_pts, dst_pts, cam):
     F,mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.FM_8POINT)
-    E, mask = cv2.findEssentialMat(src_pts,dst_pts, focal=1.0, pp=(0.,0.), method=cv2.RANSAC, prob=0.999, threshold=3.0)
-    points, R, t, mask = cv2.recoverPose(E, src_pts, dst_pts)
+    E, mask = cv2.findEssentialMat(src_pts,dst_pts, focal=cam.focal, pp=cam.pp, method=cv2.RANSAC, prob=0.999, threshold=3.0)
+    points, R, t, mask = cv2.recoverPose(E, src_pts, dst_pts, focal=cam.focal, pp=cam.pp)
     return R,t
 
 class Camera:
@@ -51,9 +57,14 @@ class Camera:
         self.K = np.array([[ 394.83410645,    0.,          304.59488242],
                            [   0.,          394.50994873,  178.66114884],
                            [   0.,            0.,            1.        ]])
+        self.focal = self.K[0][0]
+        self.pp = (self.K[0][2], self.K[1][2])
 
         #  dist = [k1,k2,p1,p2,k3]
         self.dist = np.array([[-0.40538686, 0.18274696, 0.00449549, -0.00054929, 0.06070349]])
+        self.new_K = np.array([[ 482.05945726,    0.,          305.34544298],
+                                [   0.,          479.77705725,  176.55010834],
+                                [   0.,            0.,            1.        ]])
 
 class VisualOdometry:
     def __init__(self):
@@ -71,6 +82,7 @@ class VisualOdometry:
 
     def process_init_frame(self,frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = undistort_frame(gray, self.cam)
         kp,des = self.detector.detectAndCompute(gray,None)
         self.frame_status = SECOND_FRAME
         return kp,des
@@ -80,14 +92,15 @@ class VisualOdometry:
         old_kp = self.old_kp
         old_des = self.old_des
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = undistort_frame(gray, self.cam)
         cur_kp,cur_des = self.detector.detectAndCompute(gray,None)
         src_pts,dst_pts = match_features(old_kp, old_des, cur_kp, cur_des, cam)
         self.old_kp, self.old_des = cur_kp, cur_des
         if self.frame_status == SECOND_FRAME:
-            self.cur_R, self.cur_t = estimate_pose(src_pts,dst_pts)
+            self.cur_R, self.cur_t = estimate_pose(src_pts,dst_pts, self.cam)
             self.frame_status = NEXT_FRAME
         else:
-            R, t = estimate_pose(src_pts,dst_pts)
+            R, t = estimate_pose(src_pts,dst_pts, self.cam)
             self.cur_t = self.cur_t + np.dot(self.cur_R,t)
             self.cur_R = np.dot(R,self.cur_R)
 
@@ -100,19 +113,20 @@ class VisualOdometry:
 
 VO = VisualOdometry()
 ox,oy = 0, 0
-map_2d = np.zeros((600,600,3), dtype=np.uint8)
-for i in range(30):
+map_2d = np.zeros((600,600,3), dtype=np.float32)
+for i in range(362):
     img = cv2.imread('test_imgs/drone_dataset/test{}.png'.format(i), 1)
     VO.update(img)
     if VO.frame_status > SECOND_FRAME:
         print(VO.cur_t)
-        s=20
-        nx, ny = (int(VO.cur_t[0]*s), int(VO.cur_t[1]*s))
+        s=2
+        nx, ny = (VO.cur_t[0]*s, VO.cur_t[1]*s)
         shift = 290
-        cv2.line(map_2d,(ox+shift,oy+shift),(nx+shift,ny+shift),(0,255,0),2)
+        cv2.line(map_2d,(ox+shift,oy+shift),(nx+shift,ny+shift),(i,255,255 - i),2)
         ox = nx
         oy = ny
         cv2.imshow('2D Map', map_2d)
+        cv2.imshow('Frame', img)
         cv2.waitKey(10)
 
 
