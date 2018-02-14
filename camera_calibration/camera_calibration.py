@@ -11,17 +11,18 @@ class CameraCalibration:
     """Documentation string"""
     def __init__(self):
         self.img_thread = '/usb_cam/image_raw'
+        self.img_thread = '/ardrone/front/image_raw'
         self.bridge = CvBridge()
         self.img_sub = rospy.Subscriber(self.img_thread, Image, self.on_image_get)
         self.grid_images = []
         self.gray_images = []
         self.grid_w = 6
         self.grid_h = 9
-        self.n_frames = 20
+        self.n_frames = 25
         self.time_since_last_frame = 0
         self.end_frame_time = 0
         #  Time interval allows to reposition chess grid between frames
-        self.time_interval = 1.5
+        self.time_interval = 1
         self.calibration_complete = False
         self.initial_time = time()
     
@@ -92,12 +93,19 @@ class CameraCalibration:
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objpoints,self.imgpoints, gray.shape[::-1],None,None)
         h,  w = self.gray_images[0].shape[:2]
         newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
-        f = open('camera_matirx.txt', 'w')
+        f = open('camera_par.txt', 'w')
         f.write(str(newcameramtx))
+        f.write(str('\n'))
+        f.write(str('\n'))
+        f.write(str(dist))
+        f.write(str('\n'))
+        f.write(str('\n'))
+        f.write(str(mtx))
         f.close()
         self.calibration_complete = True
+        cv2.imwrite('undistort/dst.png', self.gray_images[0])
         dst = cv2.undistort(self.gray_images[0], mtx, dist, None, newcameramtx)
-        cv2.imwrite('undistort/dst.png', dst)
+        cv2.imwrite('undistort/undst.png', dst)
         x,y,w,h = roi
         dst = dst[y:y+h, x:x+w]
         if any(dst.shape)==0:

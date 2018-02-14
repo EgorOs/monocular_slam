@@ -9,8 +9,8 @@ t = time.time()
 ''' Additional information can be found at 
 https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html'''
 
-img1 = cv2.imread('test_imgs/a1.png', 1)
-img2 = cv2.imread('test_imgs/a2.png', 1)
+img1 = cv2.imread('test_imgs/1.png', 1)
+img2 = cv2.imread('test_imgs/2.png', 1)
 gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
 gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
@@ -45,10 +45,9 @@ if len(good)>MIN_MATCH_COUNT:  #  if not enough matches drone should stop
     matchesMask = mask.ravel().tolist()
     good_matches = list(compress(good,matchesMask))
 
-
     src_pts = np.float32(src_pts)
     dst_pts = np.float32(dst_pts)
-    F,mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.FM_RANSAC)
+    F,mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.FM_8POINT)
     
     # Convert to homogenous coordinates (like transposed [x,y,1])
     pt1 = np.array([[dst_pts[0][0][0]], [dst_pts[0][0][1]], [1]])

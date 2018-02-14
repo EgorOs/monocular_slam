@@ -1,6 +1,7 @@
 *.png
 !a1.png
 !a2.png
+!test?.png
 samples
 __pycache__
 *.txt
@@ -8,3 +9,4 @@ __pycache__
 kp_matcher.py
 *jpg
 *.pyc
+.goutputstream-P1Z4DZ

@@ -22,14 +22,15 @@ def check_pairwise(img1,img2):
                     [   0.,            0.,            1.        ]])
     gray1 = cv2.undistort(gray1, mtx, dist, None, newcameramtx)
     gray2 = cv2.undistort(gray2, mtx, dist, None, newcameramtx)
+    x,y,w,h = 20,25,590,310
+    gray1 = gray1[y:y+h, x:x+w]
+    gray2 = gray2[y:y+h, x:x+w]
 
     surf = cv2.xfeatures2d.SURF_create()
     MIN_MATCH_COUNT = 10
 
     kp1, des1 = surf.detectAndCompute(gray1,None)
     kp2, des2 = surf.detectAndCompute(gray2,None)
-    locs1 = [p.pt for p in kp1]
-    locs2 = [p.pt for p in kp2]
 
     FLANN_INDEX_KDTREE = 0
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
@@ -52,6 +53,8 @@ def check_pairwise(img1,img2):
         M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
         matchesMask = mask.ravel().tolist()
         good_matches = list(compress(good,matchesMask))
+        src_pts = list(compress(src_pts,matchesMask))
+        dst_pts = list(compress(dst_pts,matchesMask))
 
         src_pts = np.float32(src_pts)
         dst_pts = np.float32(dst_pts)
@@ -74,11 +77,11 @@ def check_pairwise(img1,img2):
                        matchesMask = None, # draw only inliers
                        flags = 2)
 
-    img3 = cv2.drawMatches(img1,kp1,img2,kp2,good_matches,None,**draw_params)
+    img3 = cv2.drawMatches(gray1,kp1,gray2,kp2,good_matches,None,**draw_params)
 
     return img3
 
-for i in range(30):
+for i in range(362):
     print('Testing {}-{}.png'.format(i,i+1))
     img1 = cv2.imread('test_imgs/drone_dataset/test{}.png'.format(i), 1)
     img2 = cv2.imread('test_imgs/drone_dataset/test{}.png'.format(i+1), 1)
