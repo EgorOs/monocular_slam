@@ -2,10 +2,14 @@
 import cv2
 import numpy as np
 import rospy
+# testing
+import tf
+#--------
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 from camera import ARDroneCamera, DatasetCamera, im_to_undistort_roi
+from visualization import CloudStream
 from features import *
 from views_data import *
 
@@ -19,31 +23,38 @@ class ViewsBuffer:
         self.img_sub = rospy.Subscriber(self.img_thread, Image, self.update)
         self.cur_t = None
         self.cur_R = None
-        self.traj = np.zeros((600,600,3), dtype=np.uint8)
+        self.traj = np.zeros((600,700,3), dtype=np.uint8)
+        #  Initializes visualization topic
+        self.CS = CloudStream()
 
     def use_dataset_imgs(self):
-        """ Returns camera images with dataset images and parameters """
+        """ For the test and demonstration purposes only, replaces
+        camera images and parameters with ones from the dataset.  """
         self.cam = DatasetCamera()
         idx = '00000{}'.format(self.viewset.numViews)
         im = cv2.imread('tests/image_0/{}.png'.format(idx[-6:]))
         return im
 
     def use_drone_imgs(self):
-        """ Returns camera images with dataset images and parameters """
-        self.cam = DatasetCamera()
+        """ For the test and demonstration purposes only, replaces
+        camera images and parameters with ones from the dataset.  """
+        self.cam = ARDroneCamera()
         im = cv2.imread('tests/test_imgs/drone_dataset/test{}.png'.format(self.viewset.numViews))
         return im
 
     def update(self, im):
         cam = self.cam
-        viewset = self.viewset
-        views = self.viewset.views
         numViews = self.viewset.numViews
         im = self.bridge.imgmsg_to_cv2(im, "bgr8")
         im = self.use_dataset_imgs() #  Replases camera images with images from dataset
         im = im_to_undistort_roi(im, self.cam, to_gray=True)
         if self.viewset.numViews == 0:
             self.viewset.add_view(im)
+            P = np.array([[1,0,0,0],
+                          [0,1,0,0],
+                          [0,0,1,0]])
+            P = np.dot(cam.K,P)
+            self.viewset.projections[numViews] = P
         elif self.viewset.numViews == 1:
             self.viewset.add_view(im)
             kp_new, kp_old, matches = match_ORB_features(self.viewset.views[1],self.viewset.views[0], show_matches=True)
@@ -51,6 +62,9 @@ class ViewsBuffer:
             points, R, t, mask = cv2.recoverPose(E, kp_new, kp_old, focal=cam.fx, pp=cam.pp)
             self.cur_t = t
             self.cur_R = R
+            P = np.append(self.cur_R,self.cur_t, axis=1)
+            P = np.dot(cam.K,P)
+            self.viewset.projections[numViews] = P
         else:
             self.viewset.add_view(im)
             kp_new, kp_old, matches = match_ORB_features(self.viewset.views[numViews],self.viewset.views[numViews-1], show_matches=True)
@@ -59,16 +73,23 @@ class ViewsBuffer:
             self.cur_t = self.cur_t + np.dot(self.cur_R,t)
             self.cur_R = np.dot(R,self.cur_R)
             x,y,z = self.cur_t
-            draw_x, draw_y = int(x)+290, int(z)+90
-
-            cv2.circle(self.traj, (draw_x,draw_y), 1, (10,255,0), 1)
+            draw_x, draw_y = int(x)+90, int(z)+90
+            #  Projection matrix
+            P = np.append(self.cur_R,self.cur_t, axis=1)
+            P = np.dot(cam.K,P)
+            self.viewset.projections[numViews] = P
+            #  Triangulation to homogeneous coordinates
+            x_global = cv2.triangulatePoints(self.viewset.projections[numViews], self.viewset.projections[numViews-1],kp_new,kp_old)
+            print(x_global.shape) 
+            cv2.circle(self.traj, (draw_x,draw_y), 1, (100,numViews%255,100), 3)
             cv2.imshow('trajectory', self.traj)
             cv2.waitKey(1)
-
+            self.CS.update_cloud(x_global)
 
 def main(): 
     VO = ViewsBuffer()
     rospy.init_node("Visual_odomentry", anonymous=True)
+    br = tf.TransformBroadcaster()
     try:
         rospy.spin()
     except Exception as e:

@@ -7,6 +7,7 @@ class ViewSet:
 		#  Views is a dictionary, that contains ViewId, Points, Orientation and location
 		self.views = {}
 		self.connections = {}
+		self.projections = {}
 
 	def add_connection(self):
 		pass

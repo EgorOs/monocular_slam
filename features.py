@@ -5,6 +5,10 @@ import numpy as np
 orb = cv2.ORB_create()
 
 def match_ORB_features(im1, im2, show_matches=False, window_idx=1):
+    """ Matches features and removes a number of wrong correspondances,
+    allows to display matching results, if multiple instances of this function
+    show matches, different window indices should be set in order to avoid flickering. """
+    
     kp1, des1 = orb.detectAndCompute(im1, None)
     kp2, des2 = orb.detectAndCompute(im2, None)
     # create BFMatcher object
@@ -12,7 +16,7 @@ def match_ORB_features(im1, im2, show_matches=False, window_idx=1):
 
     # Match descriptors.
     matches = bf.match(des1,des2)
-    # Taking only relieble matches
+    # Taking only relieble matches (better filtration is required)
     matches = [m for m in matches if m.distance < 30]
     # Sort list in a way that the most precise matches were first
     matches = sorted(matches, key=lambda x:x.distance)
