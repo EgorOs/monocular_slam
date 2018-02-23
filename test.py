@@ -50,6 +50,8 @@ class ViewsBuffer:
         im = im_to_undistort_roi(im, self.cam, to_gray=True)
         if self.viewset.numViews == 0:
             self.viewset.add_view(im)
+            #  Initialize matrix P = (R|t), both rotation and translation are zero
+            #  thus R becomes an identity matrix I
             P = np.array([[1,0,0,0],
                           [0,1,0,0],
                           [0,0,1,0]])
@@ -79,16 +81,21 @@ class ViewsBuffer:
             P = np.dot(cam.K,P)
             self.viewset.projections[numViews] = P
             #  Triangulation to homogeneous coordinates
+            #  Ooops, this fucntion is for stereo cameras!
+            #  Or maybe not... Anyway we need to check or replace it.
             x_global = cv2.triangulatePoints(self.viewset.projections[numViews], self.viewset.projections[numViews-1],kp_new,kp_old)
-            print(x_global.shape) 
+            print(x_global.shape)
+            #  Draw 2d trajectory
             cv2.circle(self.traj, (draw_x,draw_y), 1, (100,numViews%255,100), 3)
             cv2.imshow('trajectory', self.traj)
             cv2.waitKey(1)
+            #  Send PointCloud2 message
             self.CS.update_cloud(x_global)
 
 def main(): 
     VO = ViewsBuffer()
     rospy.init_node("Visual_odomentry", anonymous=True)
+    #  Odometry broadcast for RViz
     br = tf.TransformBroadcaster()
     try:
         rospy.spin()

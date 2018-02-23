@@ -15,3 +15,6 @@ class ViewSet:
 	def add_view(self, im):
 		self.views[self.numViews] = im
 		self.numViews += 1
+		#  Limit the number of stored views (temporary)
+		if self.numViews > 5:
+			del self.views[self.numViews - 5]
