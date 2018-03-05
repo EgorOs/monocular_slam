@@ -50,6 +50,7 @@ class ViewsBuffer:
         im = im_to_undistort_roi(im, self.cam, to_gray=True)
         if self.viewset.numViews == 0:
             self.viewset.add_view(im)
+            ###
             #  Initialize matrix P = (R|t), both rotation and translation are zero
             #  thus R becomes an identity matrix I
             P = np.array([[1,0,0,0],
