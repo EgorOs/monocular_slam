@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 
-orb = cv2.ORB_create()
+orb = cv2.ORB_create(1800)
 
 def match_ORB_features(im1, im2, show_matches=False, window_idx=1):
     """ Matches features and removes a number of wrong correspondances,

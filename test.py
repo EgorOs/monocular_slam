@@ -3,8 +3,8 @@ import cv2
 import numpy as np
 import rospy
 # testing
-import tf
-#-------
+#import tf
+#------
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -97,7 +97,7 @@ def main():
     VO = ViewsBuffer()
     rospy.init_node("Visual_odomentry", anonymous=True)
     #  Odometry broadcast for RViz
-    br = tf.TransformBroadcaster()
+    #br = tf.TransformBroadcaster()
     try:
         rospy.spin()
     except Exception as e:
