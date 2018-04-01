@@ -34,6 +34,5 @@ class CloudStream:
 		point_cloud = pcl2.create_cloud_xyz32(self.h, pts_list)
 		self.cloud_pub.publish(point_cloud)
 
-		pass
 
 

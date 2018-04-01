@@ -172,17 +172,14 @@ class CvBridge(object):
         #  These parameters could vary depending on type of the robot
         #  and camera, I believe they can be checked via 'rostopic info' command
 
-        #dtype, n_channels = self.encoding_to_dtype_with_channels(img_msg.encoding)
+        #  dtype, n_channels = self.encoding_to_dtype_with_channels(img_msg.encoding)
         img_msg.encoding = 'rgb8'
         dtype = 'uint8'
         n_channels = 3
-        print(img_msg.encoding)
-        print(dtype)
-        print(n_channels)
-        try:
-            print("d_type: {},n_channels: {}".format(d_type,n_channels))
-        except:
-            pass
+        #  print(img_msg.encoding)
+        #  print(dtype)
+        #  print(n_channels)
+
         dtype = np.dtype(dtype)
         dtype = dtype.newbyteorder('>' if img_msg.is_bigendian else '<')
         if n_channels == 1:
@@ -199,10 +196,10 @@ class CvBridge(object):
             return im
 
         #from cv_bridge.boost.cv_bridge_boost import cvtColor2
-        ###
+
         #import cv2
         #import PIL
-        ###
+        
         #try:
         #    print(im.shape)
         #    im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)

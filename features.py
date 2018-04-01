@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 
-orb = cv2.ORB_create(1800)
+orb = cv2.ORB_create(900)
 
 def match_ORB_features(im1, im2, show_matches=False, window_idx=1):
     """ Matches features and removes a number of wrong correspondances,
@@ -17,7 +17,7 @@ def match_ORB_features(im1, im2, show_matches=False, window_idx=1):
     # Match descriptors.
     matches = bf.match(des1,des2)
     # Taking only relieble matches (better filtration is required)
-    matches = [m for m in matches if m.distance < 30]
+    matches = [m for m in matches if m.distance < 60]
     # Sort list in a way that the most precise matches were first
     matches = sorted(matches, key=lambda x:x.distance)
 

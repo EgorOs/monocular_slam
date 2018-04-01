@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import cv2
 import numpy as np
 import rospy
@@ -60,7 +60,7 @@ class ViewsBuffer:
             self.viewset.projections[numViews] = P
         elif self.viewset.numViews == 1:
             self.viewset.add_view(im)
-            kp_new, kp_old, matches = match_ORB_features(self.viewset.views[1],self.viewset.views[0], show_matches=True)
+            kp_new, kp_old, matches = match_ORB_features(self.viewset.views[1],self.viewset.views[0], show_matches=False)
             E, mask = cv2.findEssentialMat(kp_new, kp_old, focal=cam.fx, pp=cam.pp, method=cv2.RANSAC, prob=0.9999, threshold=1.0)
             points, R, t, mask = cv2.recoverPose(E, kp_new, kp_old, focal=cam.fx, pp=cam.pp)
             self.cur_t = t
@@ -70,7 +70,7 @@ class ViewsBuffer:
             self.viewset.projections[numViews] = P
         else:
             self.viewset.add_view(im)
-            kp_new, kp_old, matches = match_ORB_features(self.viewset.views[numViews],self.viewset.views[numViews-1], show_matches=True)
+            kp_new, kp_old, matches = match_ORB_features(self.viewset.views[numViews],self.viewset.views[numViews-1], show_matches=False)
             E, mask = cv2.findEssentialMat(kp_new, kp_old, focal=cam.fx, pp=cam.pp, method=cv2.RANSAC, prob=0.9999, threshold=1.0)
             points, R, t, mask = cv2.recoverPose(E, kp_new, kp_old, focal=cam.fx, pp=cam.pp)
             self.cur_t = self.cur_t + np.dot(self.cur_R,t)

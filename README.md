@@ -22,3 +22,5 @@ sudo mv cv2.so cv2_ros.so
 ```
 3) At this point everything should work fine except cv_bridge library, which converts ROS image messages to numpy array, this problem is
 related to libboost library, however I solved this problem by placing cv_bridge module in project directory and editing cv_bridge/core.py. All information about edits is written in this file and all rows of code, which caused errors are commented.
+
+
